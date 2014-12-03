@@ -20,6 +20,7 @@
 ShredderApp::ShredderApp()
 	: BApplication(APP_SIGNATURE)
 {
+	ref_num = 0;
 }
 
 
