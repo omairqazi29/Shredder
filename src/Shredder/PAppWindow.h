@@ -30,8 +30,7 @@ public:
 	virtual void SPrefs(void);
 	virtual void MessageReceived(BMessage *message);
 private:
-	BStringView * sliderStatusLabel;
-	BStringView * sliderStatus;
+	void UpdateNumerOfIterations(uint32 iterations);
 	BSlider *slider;
 	BButton * savebutton;
 	BButton * cancelbutton;	

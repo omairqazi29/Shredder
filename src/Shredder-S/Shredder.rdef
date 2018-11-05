@@ -93,3 +93,4 @@ resource vector_icon {
 
 };
 
+resource(100, "BEOS:default_shortcut") "S";

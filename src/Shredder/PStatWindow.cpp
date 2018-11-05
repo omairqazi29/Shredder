@@ -1,4 +1,6 @@
 #include <Button.h>
+#include <Catalog.h>
+#include <LayoutBuilder.h>
 #include <Slider.h>
 #include <File.h>
 #include <Roster.h>
@@ -20,21 +22,19 @@
 #include "PStatWindow.h"
 #include "PAppWindow.h"
 
+#undef B_TRANSLATION_CONTEXT
+#define B_TRANSLATION_CONTEXT "PStatWindow"
+
 PStatWindow::PStatWindow(entry_ref ref, BMessage *msg, char showStat)
-	: BWindow(BRect(64,64,600,100), "Shredding File:", B_TITLED_WINDOW,B_NOT_RESIZABLE|B_NOT_ZOOMABLE|B_NOT_CLOSABLE|B_NOT_MINIMIZABLE)
+	: BWindow(BRect(64,64,200,100), B_TRANSLATE("Shredding file:"), B_TITLED_WINDOW,B_NOT_RESIZABLE|B_NOT_ZOOMABLE|B_NOT_CLOSABLE|B_NOT_MINIMIZABLE|B_AUTO_UPDATE_SIZE_LIMITS)
 {
 	BFile	file;
 	char	*iterations;
 
-
-	BView * MainView;
-	MainView = new BView(Bounds(),"view",B_FOLLOW_ALL, 0);
-	MainView->SetViewColor(ui_color (B_PANEL_BACKGROUND_COLOR));
-	AddChild(MainView);
-
-	shreddingThisFile = new BStringView(BRect(20,10,580,30), "name", "", B_FOLLOW_LEFT | B_FOLLOW_TOP);
-	shreddingThisFile->SetViewColor(ui_color (B_PANEL_BACKGROUND_COLOR));
-	AddChild(shreddingThisFile);
+	shreddingThisFile = new BStringView("name", "");
+	BLayoutBuilder::Group<>(this, B_VERTICAL)
+		.SetInsets(B_USE_WINDOW_INSETS)
+		.Add(shreddingThisFile);
 
 	if (showStat != 'n') {
 		Show();
@@ -48,7 +48,7 @@ PStatWindow::PStatWindow(entry_ref ref, BMessage *msg, char showStat)
 		file.Read(iterations, length);
 		iterations[2] = '\0';
 		itpass = iterations;
-		free(iterations);		
+		free(iterations);
 	} else {
 			itpass = "10";
 	}		
@@ -84,7 +84,7 @@ PStatWindow::PStatWindow(entry_ref ref, BMessage *msg, char showStat)
 		Unlock();
 		system(com.String());
 	}
-
+	Lock();
 	Quit();
 }
 

@@ -1,5 +1,7 @@
 #include <Application.h>
 #include <Button.h>
+#include <Catalog.h>
+#include <LayoutBuilder.h>
 #include <Slider.h>
 #include <File.h>
 #include <Roster.h>
@@ -19,41 +21,34 @@
 
 #include "PAppWindow.h"
 
+#undef B_TRANSLATION_CONTEXT
+#define B_TRANSLATION_CONTEXT "PAppWindow"
+
 PAppWindow::PAppWindow()
-	: BWindow(BRect(64,64,384,220), "Shredder Preferences", B_TITLED_WINDOW,B_NOT_RESIZABLE|B_NOT_ZOOMABLE|B_NOT_MINIMIZABLE)
+	: BWindow(BRect(64,64,384,220), B_TRANSLATE("Shredder preferences"), B_TITLED_WINDOW,B_NOT_RESIZABLE|B_NOT_ZOOMABLE|B_NOT_MINIMIZABLE|B_AUTO_UPDATE_SIZE_LIMITS)
 {
-	
-	BView * MainView;
-	MainView = new BView(Bounds(),"view",B_FOLLOW_ALL, 0);
-	MainView->SetViewColor(ui_color (B_PANEL_BACKGROUND_COLOR));
-	AddChild(MainView);
-	
-	slider = new BSlider(BRect(5,5,315,55), "const:slider1", "Number of Iterations", new BMessage(SLIDER_CHANGE), 0, 24);
+	slider = new BSlider("const:slider1", "", new BMessage(SLIDER_CHANGE), 0, 24, B_HORIZONTAL);
+	slider->SetModificationMessage(new BMessage(SLIDER_CHANGE));
 	slider->SetHashMarks(B_HASH_MARKS_BOTTOM); 
 	slider->SetHashMarkCount(25);
-	slider->SetLimitLabels("0 - OFF","24");
-	MainView->AddChild(slider);
+	slider->SetLimitLabels(B_TRANSLATE("0 - OFF"), B_TRANSLATE("24"));
 
-	sliderStatusLabel = new BStringView(BRect(90,60,220,80), "sliderstatuslabel", "Number of Iterations:", B_FOLLOW_LEFT | B_FOLLOW_TOP);
-	sliderStatusLabel->SetViewColor(ui_color (B_PANEL_BACKGROUND_COLOR));	
-	AddChild(sliderStatusLabel);
+	savebutton = new BButton("button1", B_TRANSLATE("Save"), new BMessage(BTN_SAVE));
+	cancelbutton = new BButton("button2", B_TRANSLATE("Cancel"), new BMessage(BTN_CANCEL));
+	checkBox = new BCheckBox("check", B_TRANSLATE("Confirm shredding"), NULL);
+	checkBox2 = new BCheckBox("check", B_TRANSLATE("Show status window"), NULL);
 
-	sliderStatus = new BStringView(BRect(230,60,260,80), "sliderstatus", "0", B_FOLLOW_LEFT | B_FOLLOW_TOP);
-	sliderStatus->SetViewColor(ui_color (B_PANEL_BACKGROUND_COLOR));	
-	AddChild(sliderStatus);
-
-	savebutton = new BButton(BRect(20,120,100,120), "button1", "Save", new BMessage(BTN_SAVE), B_FOLLOW_LEFT | B_FOLLOW_TOP);
-	MainView->AddChild(savebutton);
-	
-	cancelbutton = new BButton(BRect(120,120,200,120), "button2", "Cancel", new BMessage(BTN_CANCEL), B_FOLLOW_LEFT | B_FOLLOW_TOP);
-	MainView->AddChild(cancelbutton);
-
-	checkBox = new BCheckBox(BRect(10,90,159,100), "check", "Confirm Shredding", NULL, B_FOLLOW_LEFT | B_FOLLOW_TOP);
-	MainView->AddChild(checkBox);
-
-	checkBox2 = new BCheckBox(BRect(160,90,380,100), "check", "Show Status Window", NULL, B_FOLLOW_LEFT | B_FOLLOW_TOP);
-	MainView->AddChild(checkBox2);
-
+	BLayoutBuilder::Group<>(this, B_VERTICAL)
+		.SetInsets(B_USE_WINDOW_INSETS)
+		.Add(slider)
+		.AddGroup(B_VERTICAL, B_USE_HALF_ITEM_SPACING)
+			.Add(checkBox)
+			.Add(checkBox2)
+		.End()
+		.AddGroup(B_HORIZONTAL)
+			.AddGlue()
+			.Add(cancelbutton)
+			.Add(savebutton);
 
 	// get postion
 	BFile	file;
@@ -83,14 +78,9 @@ PAppWindow::PAppWindow()
 		else
 			checkBox2->SetValue(true);
 
-
 		// set status label
-		float pos = (atof(iterations))/24;			
-
-		slider->SetPosition(pos);
-		temp = "";
-		temp << (int)(slider->Position() * 24);	
-		sliderStatus->SetText(temp.String());
+		slider->SetValue(atoi(iterations));
+		UpdateNumerOfIterations(slider->Value());
 
 		free(iterations);
 	}
@@ -104,11 +94,10 @@ void PAppWindow::SPrefs(void)
 		BFile	file;
 
 		if (file.SetTo("/boot/home/config/settings/Shredder.conf", B_READ_WRITE | B_CREATE_FILE) == B_OK) {
-	
-			if ((int)(slider->Position() * 24) < 10)
-				tempString << "0" << (int)(slider->Position() * 24);
+			if (slider->Value() < 10)
+				tempString << "0" << slider->Value();
 			else
-				tempString << (int)(slider->Position() * 24);
+				tempString << slider->Value();
 				 
 			if (checkBox->Value() == 1)
 				tempString << "y";
@@ -128,9 +117,7 @@ void PAppWindow::MessageReceived(BMessage *message)
 {
 	switch(message->what) {
 		case SLIDER_CHANGE:
-			char temp2[2];
-			sprintf(temp2, "%d", (int)(slider->Position() * 24));
-			sliderStatus->SetText(temp2);
+			UpdateNumerOfIterations(slider->Value());
 			break;
 		case BTN_SAVE:
 			SPrefs();
@@ -143,6 +130,15 @@ void PAppWindow::MessageReceived(BMessage *message)
 		BWindow::MessageReceived(message);
 		break;
 	}
+}
+
+void PAppWindow::UpdateNumerOfIterations(uint32 iterations)
+{
+	BString stringLabel = B_TRANSLATE("Number of iterations: %iterations%");
+	BString stringIterations;
+	stringIterations << iterations;
+	stringLabel.ReplaceFirst("%iterations%", stringIterations);
+	slider->SetLabel(stringLabel);
 }
 
 bool PAppWindow::QuitRequested()

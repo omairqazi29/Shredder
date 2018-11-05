@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <Alert.h>
+#include <Catalog.h>
 #include <Message.h>
 #include <String.h>
 #include <Node.h>
@@ -17,6 +18,9 @@
 
 #include "PAppWindow.h"
 #include "PStatWindow.h"
+
+#undef B_TRANSLATION_CONTEXT
+#define B_TRANSLATION_CONTEXT "ShredderAppAddon"
 
 void
 process_refs(entry_ref ref, BMessage* msg, void* reserved)
@@ -48,12 +52,9 @@ process_refs(entry_ref ref, BMessage* msg, void* reserved)
 
 	
 	if ((confirm != 'n') && (msg->FindRef("refs", 0, &fref) == B_OK)) {
-		// ok or not!
-		BAlert *shredAlert;
-		BString alertText;
-		alertText.SetTo("Are you sure you want to continue shredding?");
-		shredAlert = new BAlert("shredalert",alertText.String(), "Yes","OpenPrefs","Cancel"); //,
-		// B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
+		BAlert *shredAlert = new BAlert(B_TRANSLATE_SYSTEM_NAME("Shredder"),
+			B_TRANSLATE("Are you sure you want to continue shredding?"),
+			B_TRANSLATE("Yes"), B_TRANSLATE("Preferences" B_UTF8_ELLIPSIS), B_TRANSLATE("Cancel"));
 		shredAlert->SetShortcut(2, B_ESCAPE);
 
 		buttonIndex = shredAlert->Go();
